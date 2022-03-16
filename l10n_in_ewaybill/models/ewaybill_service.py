@@ -8,8 +8,8 @@ from odoo.addons.iap import jsonrpc
 from odoo.exceptions import RedirectWarning
 from odoo.tools.safe_eval import safe_eval
 
-DEFAULT_ENDPOINT = "https://ewaybill.odoo.co.in"
-# DEFAULT_ENDPOINT = "https://ewaybill-sandbox.odoo.co.in" # Sandbox Endpoint
+# DEFAULT_ENDPOINT = "https://ewaybill.odoo.co.in"
+DEFAULT_ENDPOINT = "https://ewaybill-sandbox.odoo.co.in" # Sandbox Endpoint
 
 
 class WaybillService(models.Model):
