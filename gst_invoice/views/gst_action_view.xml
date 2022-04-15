@@ -4,6 +4,25 @@
 <!-- "License URL : <https://store.webkul.com/license.html/>" -->
 <odoo>
     <data>
+        <record id="gst_invoice_tree" model="ir.ui.view">
+            <field name="name">account.move.gst.tree</field>
+            <field name="model">account.move</field>
+            <field name="arch" type="xml">
+                <tree string="Invoice">
+                    <field name="name"/>
+                    <field name="partner_id"/>
+                    <field name="currency_id"/>
+                    <field name="amount_total_signed" string="Total" sum="Total"/>
+                    <field name="inr_total" string="INR Total" sum="Total"/>
+                    <field name="invoice_date"/>
+                    <field name="state"/>
+                    <field name="move_type"/>
+                    <field name="gst_status" />
+                    <field name="invoice_type" />
+                    <field name="reconciled" />
+                </tree>
+            </field>
+        </record>
         <record id="customer_invoice_list_action" model="ir.actions.act_window">
             <field name="name">Customer Invoice</field>
             <field name="res_model">account.move</field>
@@ -48,7 +67,7 @@
             <field name="view_id" ref="gstr1_tool_tree"/>
             <field name="search_view_id" ref="view_gstr_filter"/>
             <field name="domain">[('gst_type', '=', 'gstr1')]</field>
-            <field name="context">{'default_gst_type': 'gstr1'}</field>
+            <field name="context">{'default_gst_type': 'gstr1','search_default_filter_by_journal':1}</field>
         </record>
 
         <record id="gstr2_list_action" model="ir.actions.act_window">
@@ -58,7 +77,7 @@
             <field name="view_id" ref="gstr1_tool_tree"/>
             <field name="domain">[('gst_type', '=', 'gstr2')]</field>
             <field name="search_view_id" ref="view_gstr_filter"/> 
-            <field name="context">{'default_gst_type': 'gstr2'}</field>
+            <field name="context">{'default_gst_type': 'gstr2','search_default_filter_by_journal':1}</field>
         </record>
 
         <record id="action_gstr2_tree_view" model="ir.actions.act_window.view">

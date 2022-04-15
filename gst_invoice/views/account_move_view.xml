@@ -24,6 +24,7 @@
                             <field name="itc_eligibility" attrs="{'invisible': [('move_type', '=', 'out_invoice')]}"/>
                             <field name="reverse_charge"/>
                             <field name="l10n_in_gstin"/>
+                            <field name="reconciled" readonly="1"/>
                         </group>
                     </group>
                 </page>
@@ -67,6 +68,7 @@
                     <field name="move_type"/>
                     <field name="gst_status" />
                     <field name="invoice_type" />
+                    <field name="reconciled" />
                 </tree>
             </field>
         </record>

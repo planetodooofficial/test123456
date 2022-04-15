@@ -76,3 +76,6 @@ class AccountMove(models.Model):
                         string='Pre GST',
                         help="Allow pre gst for cdnr invoices")
     inr_total = fields.Float(string='INR Total')
+
+    reconciled = fields.Boolean(
+        string='Reconciled')

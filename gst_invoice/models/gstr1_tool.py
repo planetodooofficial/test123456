@@ -27,6 +27,17 @@ class Gstr1Tool(models.Model):
     _description = "GSTR1 Tool"
     _inherit = ['mail.thread']
 
+    def name_get(self):
+        result = []
+        print('self.env.context',self.env.context)
+        for record in self:
+            name = record.name
+            period = record.journal_id.name or ''
+            new_name = "%s - %s" % (name, period)
+            result.append((record.id, new_name))
+        print('result',result)
+        return result
+
     def _get_gst_attachments(self):
         attachments = []
         if self.b2b_attachment:
@@ -135,17 +146,7 @@ class Gstr1Tool(models.Model):
                                  required=True, readonly=True,
                                  default=lambda self: self.env.user.company_id)
     journal_id = fields.Many2one('account.journal')  # Added By Cj
-    suitable_journal_ids = fields.Many2many('account.account', compute='compute_suitable_jouranl_ids')
-
-    def compute_suitable_jouranl_ids(self):
-        _type = self._context.get('default_gst_type')
-        print(_type)
-        self.suitable_journal_ids = False
-        if _type == 'gstr1':
-            self.suitable_journal_ids = self.env['account.journal'].search([('type', '=', 'sale')]).ids
-        elif _type == 'gstr2':
-            self.suitable_journal_ids = self.env['account.journal'].search([('type', '=', 'sale')]).ids
-
+    is_invoices_fetch = fields.Boolean(string='Is Invoices Fetched', default=False)  # Added By Jayesh
     @api.model
     def create(self, vals):
         vals['name'] = self.env['ir.sequence'].next_by_code('gstr1.tool')
@@ -262,6 +263,7 @@ class Gstr1Tool(models.Model):
         if invoiceObjs:
             self.updateInvoiceCurrencyRate(invoiceObjs)
             self.updateGSTInvoiceLines(invoiceObjs)
+            self.write({'is_invoices_fetch': True})
         return True
 
     def fetchSupplierInvoices(self):
@@ -271,6 +273,7 @@ class Gstr1Tool(models.Model):
         if invoiceObjs:
             self.updateInvoiceCurrencyRate(invoiceObjs)
             self.updateGSTInvoiceLines(invoiceObjs)
+            self.write({'is_invoices_fetch': True})
         return True
 
     def updateInvoiceCurrencyRate(self, invoiceObjs):
@@ -328,6 +331,7 @@ class Gstr1Tool(models.Model):
                       ('date', '<=', self.period_id.date_stop),
                       ('gst_status', '=', 'not_uploaded'),
                       ('move_type', 'in', invoiceType),
+                      ('journal_id', '=', self.journal_id.id),
                       ('company_id', '=', self.company_id.id),
                       ('state', 'in', ['posted']),
                       ]
@@ -1319,7 +1323,8 @@ class Gstr1Tool(models.Model):
             if currency.name != 'INR':
                 invUntaxedAmount = round(invoiceLineObj.price_subtotal * currency.rate, 2)
             productObj = invoiceLineObj.product_id
-            hsnvalue = productObj.l10n_in_hsn_code or ''
+            # hsnvalue = productObj.l10n_in_hsn_code or ''
+            hsnvalue = invoiceLineObj.hsn_code or ''
             hsnVal = hsnvalue.replace('.', '') or 'False'
             hsnName = '' # productObj.name or 'name'
             uqc = 'OTH'
@@ -1395,7 +1400,7 @@ class Gstr1Tool(models.Model):
                     hsnTuple: {
                         'num': count,
                         'hsn_sc': hsnVal,
-                        'desc': hsnName,
+                            'desc': hsnName,
                         'uqc': uqc,
                         'qty': invQty,
                         # 'val': invAmountTotal,
@@ -1407,7 +1412,7 @@ class Gstr1Tool(models.Model):
                         'csamt': 0.0
                     }
                 }
-            hsnvalue = productObj.l10n_in_hsn_code or ''
+            hsnvalue = invoiceLineObj.hsn_code or ''
             hsnData = [
                 hsnvalue.replace('.', ''), hsnName, uqc, invQty,
                 invAmountTotal, rt, invUntaxedAmount, igst, cgst, sgst, 0.0

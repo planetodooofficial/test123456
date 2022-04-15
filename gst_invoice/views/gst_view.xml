@@ -45,8 +45,8 @@
                                 <field name="period_id" required="1" attrs="{'readonly': [('status','!=','not_uploaded')]}"/>
                                 <field name="date_from" required="1" attrs="{'readonly': [('status','!=','not_uploaded')]}"/>
                                 <field name="date_to" required="1" attrs="{'readonly': [('status','!=','not_uploaded')]}"/>
-                                <field name="journal_id" options="{'no_open': True, 'no_edit': True, 'no_create': True}" domain="[('id', 'in', suitable_journal_ids)]"/>
-                                <field name="suitable_journal_ids" invisible="1"/>
+                                <field name="is_invoices_fetch" invisible="1" />
+                                <field name="journal_id" required="1"  options="{'no_open': True, 'no_edit': True, 'no_create': True}" attrs="{'readonly': ['|',('status','!=','not_uploaded'),('is_invoices_fetch','=',True)]}" domain="[('type', '=', 'sale')]"/>
                                 <field name="reverse_charge" attrs="{'readonly': [('status','!=','not_uploaded')]}"/>
                             </group>
                             <group>
@@ -116,6 +116,7 @@
                     <filter name="filed" string="Filed" domain="[('status','=','filed')]"/>
                     <group expand="0" string="Group By">
                         <filter string="GST Status" name="filter_by_status" domain="[]" context="{'group_by':'status'}"/>
+                        <filter string="Journal" name="filter_by_journal"  context="{'group_by':'journal_id'}"/>
                         <filter string="Company" name="filter_by_company" domain="[]" context="{'group_by':'company_id'}" groups="base.group_system"/>
                     </group>
                 </search>

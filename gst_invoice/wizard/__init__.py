@@ -7,3 +7,4 @@
 
 from . import invoice_type_wizard
 from . import message_wizard
+from . import upload_reconciliation

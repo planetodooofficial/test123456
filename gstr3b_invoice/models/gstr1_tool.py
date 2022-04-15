@@ -28,10 +28,29 @@ KEYS = ('txval', 'iamt', 'camt', 'samt', 'csamt')
 class Gstr1Tool(models.Model):
     _inherit = "gstr1.tool"
 
+    sale_journal_id = fields.Many2one('account.journal')  # Added By Jayesh
+    purchase_journal_id = fields.Many2one('account.journal')  # Added By Jayesh
+    gst2_isd_id = fields.Many2one('gstr1.tool')  # Added By Jayesh
+
     def _get_gst_type(self):
         res = super(Gstr1Tool, self)._get_gst_type()
         res.append(('gstr3b', 'GSTR3B'))
         return res
+
+    # @api.onchange('period_id')
+    # def _onchange_periodgst2_isd_id(self):
+    #     if self.period_id and self.gst_type == 'gstr3b':
+    #         self.gst2_isd_id = self.env['gstr1.tool'].search(
+    #             [('period_id', '=', self.period_id.id),
+    #              ('gst_type', '=', 'gstr3b')], limit=1).id
+
+    @api.onchange('sale_journal_id')
+    def _onchange_sale_journal_id(self):
+        if self.sale_journal_id:
+            self.purchase_journal_id = self.env['account.journal'].search(
+                [('l10n_in_gstin_partner_id', '=', self.sale_journal_id.l10n_in_gstin_partner_id.id),
+                 ('type', '=', 'purchase')], limit=1).id
+
 
     @api.onchange('period_id', 'date_from', 'date_to')
     def _compute_invoice_lines(self):
@@ -60,6 +79,7 @@ class Gstr1Tool(models.Model):
         if invoiceObjs:
             self.updateInvoiceCurrencyRate(invoiceObjs)
             self.updateGSTInvoiceLines(invoiceObjs)
+            self.write({'is_invoices_fetch': True})
         return True
 
     def getInvoiceObjs(self, extrafilter=[], invoiceType=[]):
@@ -72,11 +92,13 @@ class Gstr1Tool(models.Model):
         gstObjs = self.search(extrafilter)
         invoiceIds = gstObjs and gstObjs.mapped(
             'invoice_lines') and gstObjs.mapped('invoice_lines').ids or []
+        journal_ids = [self.sale_journal_id.id,self.purchase_journal_id.id]
         if self.period_id:
             filter = [
                 ('invoice_date', '>=', self.period_id.date_start),
                 ('invoice_date', '<=', self.period_id.date_stop),
                 ('move_type', 'in', invoiceType),
+                ('journal_id', 'in', journal_ids),
                 ('company_id', '=', self.company_id.id),
                 ('state', 'in', ['posted']),
             ]
@@ -294,6 +316,37 @@ class Gstr1Tool(models.Model):
             attachment = self.generateAttachment(data, invoice_type, gstToolName)
         return attachment
 
+    def getISDValues(self):
+        isd_data = {
+            'iamt': 0.0,
+            'camt': 0.0,
+            'samt': 0.0,
+            'csamt': 0.0,
+            'ty': 'ISD'
+        }
+        if not self.gst2_isd_id:
+            raise UserError("Please Select ISD GST2")
+        total_tax_amount = 0
+        for inv in self.gst2_isd_id.invoice_lines:
+            currency = inv.currency_id or None
+            for invline in inv.invoice_line_ids:
+                price = invline.price_subtotal / invline.quantity if invline.quantity > 0 else 0.0
+                taxedAmount = self.getTaxedAmount(invline.tax_ids, price, currency, invline, inv)[0]
+                total_tax_amount += round(taxedAmount, 2)
+        isd_data['iamt'] = round(total_tax_amount, 2)
+        return isd_data
+
+    def updateISDValues(self, data, respData, itc_elg):
+        for key in data.keys():
+            if key in KEYS and key in data and key in respData:
+                    data[key] = round(data[key] + respData[key], 2)
+
+        for key in itc_elg['itc_net'][0].keys():
+            if key in KEYS:
+                itcAvl_sum = sum([ele[key] for ele in itc_elg['itc_avl']])
+                itcRev_sum = sum([ele[key] for ele in itc_elg['itc_rev']])
+                itc_elg['itc_net'][0][key] = itcAvl_sum - itcRev_sum
+
     def getInvoiceData(self, active_ids, invoiceType, gstType):
         if gstType != 'gstr3b':
             # return super(ExportCsvWizard,
@@ -313,6 +366,15 @@ class Gstr1Tool(models.Model):
                 invoiceType = invoiceObj.invoice_type
                 jsonData = self.getGSTInvoiceData(
                     invoiceObj, invoiceType, jsonData, gstType)
+
+            # Added by Jayesh Start
+            respData = self.getISDValues()
+            for element in jsonData['itc_elg']['itc_avl']:
+                if element['ty'] == 'ISD':
+                    self.updateISDValues(element, respData,jsonData['itc_elg'])
+                    break
+            #Added By Jayesh End
+
             lineData = []
             rows = ['osup_det', 'osup_zero', 'osup_nil_exmp', 'isup_rev', 'osup_nongst']
             cols = ['txval', 'iamt', 'camt', 'samt', 'csamt']
@@ -598,7 +660,7 @@ class Gstr1Tool(models.Model):
                         self.updateGstValues(itc_elg['itc_rev'][0], respData)
                     else:
                         if invoiceType == 'import':
-                            if invoiceLineObj.product_id and invoiceLineObj.product_id.type == 'consu':
+                            if invoiceLineObj.product_id and invoiceLineObj.product_id.detailed_type == 'consu':
                                 productType = 'IMPG'
                             else:
                                 productType = 'IMPS'
