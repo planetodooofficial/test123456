@@ -9,8 +9,8 @@ from odoo.exceptions import RedirectWarning
 from odoo.addons.iap import jsonrpc
 
 
-# DEFAULT_ENDPOINT = "https://einvoice.odoo.co.in"  # Production
-DEFAULT_ENDPOINT = "https://einvoice-sandbox.odoo.co.in"  # Testing Endpoint
+DEFAULT_ENDPOINT = "https://einvoice.odoo.co.in"  # Production
+# DEFAULT_ENDPOINT = "https://einvoice-sandbox.odoo.co.in"  # Testing Endpoint
 
 _logger = logging.getLogger(__name__)
 
