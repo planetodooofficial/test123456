@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="tds_rates_rule_form_view" model="ir.ui.view">
+        <field name="name">Tds Rates Rule Form View</field>
+        <field name="model">tds.rates.rule</field>
+        <field name="arch" type="xml">
+            <form string="Master Data Form">
+                <sheet>
+                    <label class="oe_edit_only" for="name" string="Section"/>
+                    <h2><field name="name" placeholder="Section"/></h2>
+                    <group col="6" >
+                        <field name="nature_of_payment"/>
+                        <field name="limit_dedu_tax"/>
+                        <field name="tax_id"/>
+                    </group>
+                    <group string="Rate of TDS applicable for the period or Basic Cut off (Individual /Company and others New Rate %)"  col="6" >
+                        <field name="individual"/>
+                        <field name="company"/>
+                        <field name="other"/>
+                        <field name="invalid_pan"/>
+                    </group>
+                    <field name="summary"/>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" widget="mail_followers"/>
+                    <field name="activity_ids" widget="mail_activity"/>
+                    <field name="message_ids" widget="mail_thread" options='{"thread_level": 1}'/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+
+
+    <record id="tds_rates_rule_tree_view" model="ir.ui.view">
+        <field name="name">Tds Rates Rule Tree View</field>
+        <field name="model">tds.rates.rule</field>
+        <field name="arch" type="xml">
+            <tree string="Master Data Tree View">
+                <field name="name"/>
+                <field name="tax_id"/>
+                <field name="individual"/>
+                <field name="company"/>
+                <field name="other"/>
+                <field name="invalid_pan"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="tds_rates_rule_search_view" model="ir.ui.view">
+        <field name="name">Tds Rates Rule search</field>
+        <field name="model">tds.rates.rule</field>
+        <field name="arch" type="xml">
+            <search string="EXTC Department">
+                <field name="name" string="Section" filter_domain="[('name', 'ilike', self)]"/>
+                <group expand="1" string="Group By">
+                    <filter string="Tax" name="operating_unit_id" context="{'group_by':'tax_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="tds_rates_rule_action_view" model="ir.actions.act_window">
+        <field name="name">TDS Rate Rules</field>
+        <field name="res_model">tds.rates.rule</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="tds_rates_rule_search_view"/>
+    </record>
+    <menuitem id="menu_action_tds_rates_rule_form" parent ='account.account_account_menu'  action="tds_rates_rule_action_view" sequence="3"/>
+</odoo>
