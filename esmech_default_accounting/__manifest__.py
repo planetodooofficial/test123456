@@ -20,6 +20,8 @@ You could use this simplified accounting in case you work with an (external) acc
     'data': [
         # 'views/account_journal_view.xml',
         'views/account_move_view.xml',
+        'views/tds_rates_view.xml',
+        'security/ir.model.access.csv',
 
     ],
     'demo': [
